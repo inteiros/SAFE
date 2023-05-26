@@ -63,7 +63,8 @@ Button greenButton(37);
 Button redButton(35);
 Button blueButton(33);
 
-int sequencia[5] = {};                                 
+#define SEQ 5
+int sequencia[SEQ] = {};                                 
 int rodada_atual = 0;     
 int pressed = 0;                               
 int passo_atual_na_sequencia = 0;                        
@@ -178,55 +179,7 @@ void setup() {
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
-  
-  if (currentMillis - PreviousMillis >= 1000)
-  {
-    PreviousMillis += 1000;
-    if (SecondsRemaining > 0)
-    {
-      lcd.clear();
-      SecondsRemaining--;
-      if (MinutesRemaining == 00 && SecondsRemaining < 10){
-        tone(buzzer, 3000, 100);
-      }else {
-        tone(buzzer, 523, 100);
-      }
-    }else if (SecondsRemaining == 0)
-    {
-      MinutesRemaining -= 1;
-      SecondsRemaining += 59;
-    }
-    lcd.clear();
-    lcd.print(MinutesRemaining);
-    lcd.print(":");
-    if(SecondsRemaining < 10)
-    {
-      lcd.print("0");
-     }
-    lcd.print(SecondsRemaining);
-    if(senha != ""){
-      lcd.setCursor(1,1);
-      lcd.print(senha);
-      lcd.setCursor(0,1);
-    }
-    if (MinutesRemaining + SecondsRemaining == 0)
-    {
-      lcd.clear();
-      lcd.print("BOOM");
-      tone(buzzer, 523, 3000);
-      digitalWrite(led1, HIGH);
-      digitalWrite(led2, HIGH);
-      digitalWrite(led3, HIGH);
-      delay(1000);
-      lcd.clear();
-      while(true){
-        lcd.print("GAME OVER");
-        delay(1000);
-        lcd.clear();
-      }
-    }
-  }
+  countdown();
   //------------
   // senha loop
     char key = teclado_personalizado.getKey();
@@ -267,30 +220,18 @@ void loop() {
         digitalWrite(gled, LOW);
         digitalWrite(bled, LOW);
         delay(1000);        
-        sequencia[5] = {};
+        sequencia[SEQ] = {};
         rodada_atual = 0;
         passo_atual_na_sequencia = 0;
         err++;
         beeperr(err);
         perdeu_o_jogo = false;
-    }
-  
-    if(err == 3){
-      while(true){
-        digitalWrite(rled, HIGH);
-      }
-    }
-    
-    if(passo_atual_na_sequencia == 5){
-      modgenius = 1;
-      while(true){
-        digitalWrite(gled, HIGH);
-      }
-    } else if (pressed == 1){
+    } else if (pressed == 1 && modgenius == 0){
         proximaRodada();        // Inicia a próxima rodada
         reproduzirSequencia();  // Reproduz a sequencia atual
         aguardarJogador();      // Aguarda jogadas
         delay(1000);            // 1 segundo de uma jogada a outra
+        countdown();
     }
 
     // cofre loop
@@ -340,6 +281,7 @@ void loop() {
         beeperr(err);
       }
     }
+    Serial.print(err);
 
      if(err == 1){
         digitalWrite(led1, HIGH);
@@ -350,12 +292,18 @@ void loop() {
      }
      if(err == 3){
         digitalWrite(led3, HIGH);
-        beeperr(err);
+        digitalWrite(rled, HIGH);
+        digitalWrite(led1c, HIGH);
+        digitalWrite(led2c, HIGH);
+        digitalWrite(led3c, HIGH);
+        digitalWrite(greenLED, HIGH);
+        digitalWrite(blueLED, HIGH);
+        digitalWrite(redLED, HIGH);
+        tone(buzzer, nota_C4,1000);
         while(true){
           lcd.clear();
           lcd.print("GAME OVER");
           delay(1000);
-          beeperr(err);
           lcd.clear();
         }
      }
@@ -421,6 +369,7 @@ void flash(int color, int durationMs) {
 void reproduzirSequencia() {
   for (int i = 0; i < rodada_atual; i++) {
     flash(sequencia[i], 1000);
+    countdown();
   }
 }
  
@@ -428,6 +377,7 @@ void aguardarJogador() {  // Aguarda o inicio do jogo
   for (int i = 0; i < rodada_atual; i++) {
     aguardarJogada();
     verificarJogada();
+    countdown();
  
     if (perdeu_o_jogo) {
       break;
@@ -442,12 +392,17 @@ void aguardarJogador() {  // Aguarda o inicio do jogo
 void aguardarJogada() {
   boolean jogada_efetuada = false;
   while (!jogada_efetuada) {
+      if(rodada_atual == SEQ){
+        modgenius++;
+        break;
+      }
+      countdown();
       if (greenButton.pressed()) {
         botao_pressionado = 1; 
         digitalWrite(greenLED, HIGH);
         delay(500);
         digitalWrite(greenLED, LOW);
-        delay(500);
+        countdown();
  
         jogada_efetuada = true;
       } else if (redButton.pressed()) {
@@ -455,7 +410,7 @@ void aguardarJogada() {
         digitalWrite(redLED, HIGH);
         delay(500);
         digitalWrite(redLED, LOW);
-        delay(500);
+        countdown();
  
         jogada_efetuada = true;
       } else if (blueButton.pressed()) {
@@ -463,7 +418,7 @@ void aguardarJogada() {
         digitalWrite(blueLED, HIGH);
         delay(500);
         digitalWrite(blueLED, LOW);
-        delay(500);
+        countdown();
  
         jogada_efetuada = true;
       }
@@ -471,7 +426,64 @@ void aguardarJogada() {
 }
  
 void verificarJogada() {
+  countdown();
   if (sequencia[passo_atual_na_sequencia] != botao_pressionado) { 
     perdeu_o_jogo = true;
+  } else if(rodada_atual == SEQ){
+    modgenius++;
+  }
+}
+
+void countdown() {
+  unsigned long currentMillis = millis();
+  
+  if (currentMillis - PreviousMillis >= 1000)
+  {
+    PreviousMillis += 1000;
+    if (SecondsRemaining > 0)
+    {
+      lcd.clear();
+      SecondsRemaining--;
+      if (MinutesRemaining == 00 && SecondsRemaining < 10){
+        tone(buzzer, 3000, 100);
+      }else {
+        tone(buzzer, 523, 100);
+      }
+    }else if (SecondsRemaining == 0)
+    {
+      MinutesRemaining -= 1;
+      SecondsRemaining += 59;
+    }
+    lcd.clear();
+    lcd.print(MinutesRemaining);
+    lcd.print(":");
+    if(SecondsRemaining < 10)
+    {
+      lcd.print("0");
+     }
+    lcd.print(SecondsRemaining);
+    if(senha != ""){
+      lcd.setCursor(1,1);
+      lcd.print(senha);
+      lcd.setCursor(0,1);
+    }
+    if (MinutesRemaining + SecondsRemaining == 0)
+    {
+        digitalWrite(led3, HIGH);
+        digitalWrite(rled, HIGH);
+        digitalWrite(led1c, HIGH);
+        digitalWrite(led2c, HIGH);
+        digitalWrite(led3c, HIGH);
+        digitalWrite(greenLED, HIGH);
+        digitalWrite(blueLED, HIGH);
+        digitalWrite(redLED, HIGH);
+        tone(buzzer, nota_C4,1000);
+        while(true){
+          lcd.clear();
+          lcd.print("GAME OVER");
+          delay(1000);
+          lcd.clear();
+       }
+    }
   }
 }
