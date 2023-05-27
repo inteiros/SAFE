@@ -476,12 +476,12 @@ void aguardarJogada() {
  
 void verificarJogada() {
   countdown();
-  if (sequencia[passo_atual_na_sequencia] != botao_pressionado) { 
-    perdeu_o_jogo = true;
-  } else if(rodada_atual == SEQ+1){
-    if(modgenius == 0){
-          modgenius++;
-    }
+  if(rodada_atual != SEQ+1){
+    if (sequencia[passo_atual_na_sequencia] != botao_pressionado) { 
+      perdeu_o_jogo = true;
+    }  
+  } else if(modgenius == 0){
+      modgenius++;
   }
 }
 
