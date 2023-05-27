@@ -20,6 +20,7 @@ int err = 0;
 unsigned SecondsRemaining = 0;
 unsigned long PreviousMillis = 0;
 unsigned MinutesRemaining;
+unsigned TimeElapsed = 0;
 int t = SecondsRemaining;
 const int nota_C4 = 262;
 const int nota_DS7 = 2489;
@@ -122,7 +123,7 @@ void setup() {
   pinMode(pot1, INPUT);
   pinMode(pot2, INPUT);
   pinMode(pot3, INPUT);
-  randomSeed(time(0));
+  randomSeed(time(NULL));
 
   digitalWrite(led1, LOW);
   digitalWrite(led2, LOW);
@@ -344,18 +345,18 @@ void loop() {
         digitalWrite(ledf, HIGH);
         while(true){
           lcd.clear();
-          lcd.print("BOMB DISARMED");
-          lcd.setCursor(1,1);
-          lcd.print(MinutesRemaining);
+          lcd.print("BOMB DISARMED IN");
+          lcd.setCursor(0,1);
+          lcd.print("0");
+          lcd.print(TimeElapsed / 60);
           lcd.print(":");
-          if(SecondsRemaining < 10)
+          if(TimeElapsed % 60 < 10)
           {
             lcd.print("0");
            }
-          lcd.print(SecondsRemaining);
-          lcd.print(" REMAINING");
+          lcd.print(TimeElapsed % 60);
           delay(1000);
-          lcd.setCursor(0,1);
+          lcd.setCursor(0,0);
           lcd.clear();
         }
      }
@@ -505,6 +506,7 @@ void countdown() {
     {
       lcd.clear();
       SecondsRemaining--;
+      TimeElapsed++;
       if (MinutesRemaining == 00 && SecondsRemaining < 10){
         tone(buzzer, 3000, 100);
       }else {
