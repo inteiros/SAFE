@@ -1,4 +1,5 @@
 #include <String.h>
+#include <time.h>
 #include "LiquidCrystal_I2C.h"
 #include "Button.h"
 #include "Keypad.h"
@@ -55,7 +56,7 @@ const char COMBINACAO3[LINHAS][COLUNAS] = { // Matriz de caracteres (mapeamento 
 byte PINOS_LINHAS[LINHAS] = {40, 41, 42, 43}; // Pinos de conexao com as linhas do teclado
 byte PINOS_COLUNAS[COLUNAS] = {44, 45, 46, 47}; // Pinos de conexao com as colunas do teclado
 
-int keypadselected = random(1, 3);
+int keypadselected = 1;
 
 Keypad teclado_personalizado1 = Keypad(makeKeymap(COMBINACAO1), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
 Keypad teclado_personalizado2 = Keypad(makeKeymap(COMBINACAO2), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
@@ -121,7 +122,7 @@ void setup() {
   pinMode(pot1, INPUT);
   pinMode(pot2, INPUT);
   pinMode(pot3, INPUT);
-  randomSeed(analogRead(0));
+  randomSeed(time(0));
 
   digitalWrite(led1, LOW);
   digitalWrite(led2, LOW);
@@ -135,6 +136,8 @@ void setup() {
   codigo1 = random(0, 73);
   codigo2 = random(0, 73);
   codigo3 = random(0, 73);
+  
+  keypadselected = random(1, 3);
 
   // genius setup
 
@@ -148,8 +151,6 @@ void setup() {
   pinMode(rled, OUTPUT);
   pinMode(gled, OUTPUT);
   pinMode(bled, OUTPUT);
-
-  randomSeed(analogRead(0));
 
   // master setup
 
