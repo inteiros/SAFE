@@ -55,7 +55,11 @@ const char COMBINACAO3[LINHAS][COLUNAS] = { // Matriz de caracteres (mapeamento 
 byte PINOS_LINHAS[LINHAS] = {40, 41, 42, 43}; // Pinos de conexao com as linhas do teclado
 byte PINOS_COLUNAS[COLUNAS] = {44, 45, 46, 47}; // Pinos de conexao com as colunas do teclado
 
-Keypad teclado_personalizado = Keypad(makeKeymap(COMBINACAO1), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS); // Inicia teclado
+int keypadselected = random(1, 3);
+
+Keypad teclado_personalizado1 = Keypad(makeKeymap(COMBINACAO1), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
+Keypad teclado_personalizado2 = Keypad(makeKeymap(COMBINACAO2), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
+Keypad teclado_personalizado3 = Keypad(makeKeymap(COMBINACAO3), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
 
 // var genius
 
@@ -88,6 +92,10 @@ int perdeu_o_jogo = false;  // Variável fim de jogo
 #define pot1 A1
 #define pot2 A2
 #define pot3 A3
+
+int correct1 = 0;
+int correct2 = 0;
+int correct3 = 0;
 
 Button botao(A4);
 
@@ -180,33 +188,51 @@ void setup() {
 
 void loop() {
   countdown();
+  
   //------------
   // senha loop
-    char key = teclado_personalizado.getKey();
-  
-    if (key >= '0' && key <= '9') {
-        senha += key;
-        lcd.setCursor(1,1);
-        lcd.print(senha);
-        lcd.setCursor(0,1);
+    char key = "";
+    if(keypadselected == 1){
+      key = teclado_personalizado1.getKey();
+    } else if(keypadselected == 2){
+      key = teclado_personalizado2.getKey();
+    }if(keypadselected == 3){
+      key = teclado_personalizado3.getKey();
     }
   
-    if (key == 'C') {
-        senha.remove(senha.length() - 1, 1);
-    }
-  
-    if(key == 'D'){
-      Serial.print(senha);
-      if(senha == senhaf){
-        modsenha++;
-      }else {
-        err = 1;
-        beeperr(err);
-        senha = "";
+    if(modsenha == 0){
+      if (key >= '0' && key <= '9') {
+          senha += key;
+          lcd.setCursor(1,1);
+          lcd.print(senha);
+          lcd.setCursor(0,1);
       }
+    
+      if (key == 'C') {
+          senha.remove(senha.length() - 1, 1);
+      }
+    
+      if(key == 'D'){
+        if(senha == senhaf){
+          modsenha++;
+        }else {
+          err++;
+          beeperr(err);
+          senha = "";
+        }
+      }
+    }
+    if(modsenha != 0){
+        lcd.setCursor(1,1);
+        lcd.print("SENHA CORRETA");
+        lcd.setCursor(0,1);
     }
 
      // genius loop
+
+     if(modgenius != 0){
+        digitalWrite(gled, HIGH);
+     }
 
      if(greenButton.pressed() || blueButton.pressed() || redButton.pressed()){
         pressed = 1;
@@ -255,33 +281,38 @@ void loop() {
       Serial.println(valor3);
       if (valor1 >= codigo1 && valor1 < codigo1 + intervalo) {
         digitalWrite(led1c, HIGH);
+        correct1 = 1;
       }
       else {
+        correct1 = 0;
         digitalWrite(led1c, LOW);
       }
       if (valor2 >= codigo2 && valor2 < codigo2 + intervalo) {
+        correct2 = 1;
         digitalWrite(led2c, HIGH);
       }
       else {
         digitalWrite(led2c, LOW);
+        correct2 = 0;
       }
       if (valor3 >= codigo3 && valor3 < codigo3 + intervalo) {
         digitalWrite(led3c, HIGH);
+        correct3 = 1;
       }
       else {
         digitalWrite(led3c, LOW);
+        correct3 = 0;
       }
       tempoAntes = millis();
     }
     if (botao.pressed()) {
-      if(digitalRead(led1c) == HIGH && digitalRead(led2c) == HIGH && digitalRead(led3c) == HIGH) {
+      if(correct1 + correct2 + correct3 == 3) {
         modcofre++;
       } else {
         err++;
         beeperr(err);
       }
     }
-    Serial.print(err);
 
      if(err == 1){
         digitalWrite(led1, HIGH);
@@ -312,7 +343,7 @@ void loop() {
         digitalWrite(ledf, HIGH);
         while(true){
           lcd.clear();
-          lcd.print("BOMB DISARMED IN");
+          lcd.print("BOMB DISARMED");
           lcd.setCursor(1,1);
           lcd.print(MinutesRemaining);
           lcd.print(":");
@@ -321,6 +352,7 @@ void loop() {
             lcd.print("0");
            }
           lcd.print(SecondsRemaining);
+          lcd.print(" REMAINING");
           delay(1000);
           lcd.setCursor(0,1);
           lcd.clear();
@@ -368,8 +400,15 @@ void flash(int color, int durationMs) {
 
 void reproduzirSequencia() {
   for (int i = 0; i < rodada_atual; i++) {
+    if(rodada_atual == SEQ+1){
+        if(modgenius == 0){
+          modgenius++;
+        }
+        break;
+     }
     flash(sequencia[i], 1000);
     countdown();
+    correct();
   }
 }
  
@@ -382,6 +421,12 @@ void aguardarJogador() {  // Aguarda o inicio do jogo
     if (perdeu_o_jogo) {
       break;
     }
+    if(rodada_atual == SEQ+1){
+        if(modgenius == 0){
+          modgenius++;
+        }
+        break;
+     }
  
     passo_atual_na_sequencia++;
   }
@@ -392,11 +437,13 @@ void aguardarJogador() {  // Aguarda o inicio do jogo
 void aguardarJogada() {
   boolean jogada_efetuada = false;
   while (!jogada_efetuada) {
-      if(rodada_atual == SEQ){
-        modgenius++;
+      countdown();
+      if(rodada_atual == SEQ+1){
+        if(modgenius == 0){
+          modgenius++;
+        }
         break;
       }
-      countdown();
       if (greenButton.pressed()) {
         botao_pressionado = 1; 
         digitalWrite(greenLED, HIGH);
@@ -429,12 +476,25 @@ void verificarJogada() {
   countdown();
   if (sequencia[passo_atual_na_sequencia] != botao_pressionado) { 
     perdeu_o_jogo = true;
-  } else if(rodada_atual == SEQ){
-    modgenius++;
+  } else if(rodada_atual == SEQ+1){
+    if(modgenius == 0){
+          modgenius++;
+    }
   }
 }
 
+void correct() {
+  lcd.setCursor(11,0);
+  lcd.print("(");
+  lcd.print(modsenha + modcofre + modgenius);
+  lcd.print("/");
+  lcd.print("3");
+  lcd.print(")");
+  lcd.setCursor(0,1);
+}
+
 void countdown() {
+  correct();
   unsigned long currentMillis = millis();
   
   if (currentMillis - PreviousMillis >= 1000)
