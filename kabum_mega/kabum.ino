@@ -30,7 +30,7 @@ const int nota_E7 = 2637;
 
 const byte LINHAS = 4; // Linhas do teclado
 const byte COLUNAS = 4; // Colunas do teclado
-String senhaf = "523";
+String senhaf = "7355608";
 String senha = "";
   
 const char COMBINACAO1[LINHAS][COLUNAS] = { // Matriz de caracteres (mapeamento do teclado)
@@ -62,6 +62,28 @@ int keypadselected = 1;
 Keypad teclado_personalizado1 = Keypad(makeKeymap(COMBINACAO1), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
 Keypad teclado_personalizado2 = Keypad(makeKeymap(COMBINACAO2), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
 Keypad teclado_personalizado3 = Keypad(makeKeymap(COMBINACAO3), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
+
+// var corta fio
+
+const int fiop = 7;
+const int fiov = 6;
+const int fiom = 5;
+const int fior = 4;
+boolean P = 0;
+boolean V = 0;
+boolean M = 0;
+boolean R = 0;
+int D_current[]={P,V,M,R};
+
+int selectedcombination = 1;
+
+int D1[]={1,0,1,0};
+int D2[]={0,1,0,1};
+int D3[]={0,1,0,0};
+
+int state[]={0,0,0,0};
+
+int modcurrent = 0;
 
 // var genius
 
@@ -112,8 +134,19 @@ byte intervalo = 8;
 unsigned long tempoAntes = 0;
 unsigned long tempoDepois = 0;
 
+int seedgerada = 0;
+int beeped1 = 0;
+int beeped2 = 0;
+int beeped3 = 0;
+
 void setup() {
   Serial.begin(9600); 
+ 
+  // corta fio setup
+  pinMode(fiop,INPUT_PULLUP);
+  pinMode(fiov,INPUT_PULLUP);
+  pinMode(fiom,INPUT_PULLUP);
+  pinMode(fior,INPUT_PULLUP);
 
   // cofre setup
 
@@ -123,7 +156,6 @@ void setup() {
   pinMode(pot1, INPUT);
   pinMode(pot2, INPUT);
   pinMode(pot3, INPUT);
-  randomSeed(time(NULL));
 
   digitalWrite(led1, LOW);
   digitalWrite(led2, LOW);
@@ -133,12 +165,6 @@ void setup() {
 
   Serial.begin(9600);
   botao.begin();
-
-  codigo1 = random(0, 73);
-  codigo2 = random(0, 73);
-  codigo3 = random(0, 73);
-  
-  keypadselected = random(1, 3);
 
   // genius setup
 
@@ -184,12 +210,26 @@ void setup() {
   //lcd.clear();
   delay(1000); 
   
-  MinutesRemaining = 02;
+  MinutesRemaining = 04;
   SecondsRemaining = 04;
 }
 
 void loop() {
   countdown();
+
+  if(seedgerada == 0){
+    Serial.print("Random seed: ");
+    Serial.println(analogRead(0));
+    Serial.println("-------------------------------");
+    randomSeed(analogRead(0));
+    codigo1 = random(0, 73);
+    codigo2 = random(0, 73);
+    codigo3 = random(0, 73);
+    
+    keypadselected = random(1, 4);
+    selectedcombination = random(1, 4);
+    seedgerada = 1;
+  }
   
   //------------
   // senha loop
@@ -216,10 +256,9 @@ void loop() {
     
       if(key == 'D'){
         if(senha == senhaf){
-          modsenha++;
+          modsenha = 1;
         }else {
           err++;
-          beeperr(err);
           senha = "";
         }
       }
@@ -252,7 +291,6 @@ void loop() {
         rodada_atual = 0;
         passo_atual_na_sequencia = 0;
         err++;
-        beeperr(err);
         perdeu_o_jogo = false;
     } else if (pressed == 1 && modgenius == 0){
         proximaRodada();        // Inicia a próxima rodada
@@ -309,21 +347,31 @@ void loop() {
     }
     if (botao.pressed()) {
       if(correct1 + correct2 + correct3 == 3) {
-        modcofre++;
+        modcofre = 1;
       } else {
         err++;
-        beeperr(err);
       }
     }
 
      if(err == 1){
         digitalWrite(led1, HIGH);
-        
+        if(beeped1 == 0){
+          beeperr(err);
+          beeped1 = 1;
+        }
      }
      if(err == 2){
         digitalWrite(led2, HIGH);
+        if(beeped2 == 0){
+          beeperr(err);
+          beeped2 = 1;
+        }
      }
      if(err == 3){
+        if(beeped3 == 0){
+          beeperr(err);
+          beeped3 = 1;
+        }
         digitalWrite(led3, HIGH);
         digitalWrite(rled, HIGH);
         digitalWrite(led1c, HIGH);
@@ -341,7 +389,7 @@ void loop() {
         }
      }
 
-     if(modcofre != 0 && modsenha != 0 && modgenius != 0){
+     if(modcofre != 0 && modsenha != 0 && modgenius != 0 && modcurrent !=0){
         digitalWrite(ledf, HIGH);
         while(true){
           lcd.clear();
@@ -360,8 +408,68 @@ void loop() {
           lcd.clear();
         }
      }
-     
-  //delay(500);
+
+  if(modcurrent == 0){
+    corrente();
+    if(selectedcombination == 1){
+      Serial.print(D1[0]);
+      Serial.print(D1[1]);
+      Serial.print(D1[2]);
+      Serial.print(D1[3]);
+      Serial.print("-----------");
+      if(D_current[0] == D1[0] && D_current[2] == D1[2]){
+         modcurrent = 1;
+      }
+      for(int ii = 0; ii < 4; ii++){
+        if(D_current[ii] != 0 && D1[ii] != 1 && D_current[ii] != state[ii]){
+          err++;
+          for(int ij = 0; ij < 4; ij++){
+            state[ij] = D_current[ij];
+          }
+        }
+      }
+    }
+
+    if(selectedcombination == 2){
+      Serial.print(D2[0]);
+      Serial.print(D2[1]);
+      Serial.print(D2[2]);
+      Serial.print(D2[3]);
+      Serial.print("-----------");
+      if(D_current == D2){
+         modcurrent = 1;
+      }
+
+      for(int ii = 0; ii < 4; ii++){
+        if(D_current[ii] != 0 && D2[ii] != 1 && D_current[ii] != state[ii]){
+          err++;
+          for(int ij = 0; ij < 4; ij++){
+            state[ij] = D_current[ij];
+          }
+        }
+      }
+    }
+
+    if(selectedcombination == 3){
+      Serial.print(D3[0]);
+      Serial.print(D3[1]);
+      Serial.print(D3[2]);
+      Serial.print(D3[3]);
+      Serial.print("-----------");
+      if(D_current == D3){
+         modcurrent = 1;
+      }
+
+      for(int ii = 0; ii < 4; ii++){
+        if(D_current[ii] != 0 && D3[ii] != 1 && D_current[ii] != state[ii]){
+          err++;
+          for(int ij = 0; ij < 4; ij++){
+            state[ij] = D_current[ij];
+          }
+        }
+      }
+    }
+  }
 }
 
 void beeperr(int err) {
@@ -378,6 +486,8 @@ void beeperr(int err) {
 
 void proximaRodada() {
   int numero_sorteado = random(0, 3);
+  Serial.print("COR: ");
+  Serial.print(numero_sorteado);
   sequencia[rodada_atual++] = numero_sorteado;
 }
 
@@ -404,7 +514,7 @@ void reproduzirSequencia() {
   for (int i = 0; i < rodada_atual; i++) {
     if(rodada_atual == SEQ+1){
         if(modgenius == 0){
-          modgenius++;
+          modgenius = 1;
         }
         break;
      }
@@ -425,7 +535,7 @@ void aguardarJogador() {  // Aguarda o inicio do jogo
     }
     if(rodada_atual == SEQ+1){
         if(modgenius == 0){
-          modgenius++;
+          modgenius = 1;
         }
         break;
      }
@@ -442,7 +552,7 @@ void aguardarJogada() {
       countdown();
       if(rodada_atual == SEQ+1){
         if(modgenius == 0){
-          modgenius++;
+          modgenius = 1;
         }
         break;
       }
@@ -481,16 +591,16 @@ void verificarJogada() {
       perdeu_o_jogo = true;
     }  
   } else if(modgenius == 0){
-      modgenius++;
+      modgenius = 1;
   }
 }
 
 void correct() {
   lcd.setCursor(11,0);
   lcd.print("(");
-  lcd.print(modsenha + modcofre + modgenius);
+  lcd.print(modsenha + modcofre + modgenius + modcurrent);
   lcd.print("/");
-  lcd.print("3");
+  lcd.print("4");
   lcd.print(")");
   lcd.setCursor(0,1);
 }
@@ -549,4 +659,23 @@ void countdown() {
        }
     }
   }
+}
+
+
+void corrente(){
+  P = digitalRead(fiop);
+  V = digitalRead(fiov);
+  M = digitalRead(fiom);
+  R = digitalRead(fior);
+  // Print for debug:
+  Serial.println("D_current:");
+  D_current[0] = P;
+  D_current[1] = V;
+  D_current[2] = M;
+  D_current[3] = R;
+  Serial.println(D_current[0]);
+  Serial.println(D_current[1]);
+  Serial.println(D_current[2]);
+  Serial.println(D_current[3]);
+  Serial.println(" ");
 }
