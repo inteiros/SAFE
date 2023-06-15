@@ -57,8 +57,6 @@ const char COMBINACAO3[LINHAS][COLUNAS] = { // Matriz de caracteres (mapeamento 
 byte PINOS_LINHAS[LINHAS] = {40, 41, 42, 43}; // Pinos de conexao com as linhas do teclado
 byte PINOS_COLUNAS[COLUNAS] = {44, 45, 46, 47}; // Pinos de conexao com as colunas do teclado
 
-int keypadselected = 1;
-
 Keypad teclado_personalizado1 = Keypad(makeKeymap(COMBINACAO1), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
 Keypad teclado_personalizado2 = Keypad(makeKeymap(COMBINACAO2), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
 Keypad teclado_personalizado3 = Keypad(makeKeymap(COMBINACAO3), PINOS_LINHAS, PINOS_COLUNAS, LINHAS, COLUNAS);  
@@ -74,6 +72,10 @@ boolean V = 0;
 boolean M = 0;
 boolean R = 0;
 int D_current[]={P,V,M,R};
+
+int rselected = 10;
+int gselected = 11;
+int bselected = 12;
 
 int selectedcombination = 1;
 
@@ -226,19 +228,29 @@ void loop() {
     codigo2 = random(0, 73);
     codigo3 = random(0, 73);
     
-    keypadselected = random(1, 4);
     selectedcombination = random(1, 4);
+
+    if(selectedcombination == 1){
+      digitalWrite(rselected, HIGH);
+    }
+    if(selectedcombination == 2){
+      digitalWrite(gselected, HIGH);
+    }
+    if(selectedcombination == 3){
+      digitalWrite(bselected, HIGH);
+    }
+    
     seedgerada = 1;
   }
   
   //------------
   // senha loop
     char key = "";
-    if(keypadselected == 1){
+    if(selectedcombination == 1){
       key = teclado_personalizado1.getKey();
-    } else if(keypadselected == 2){
+    } else if(selectedcombination == 2){
       key = teclado_personalizado2.getKey();
-    }if(keypadselected == 3){
+    } else if(selectedcombination == 3){
       key = teclado_personalizado3.getKey();
     }
   
