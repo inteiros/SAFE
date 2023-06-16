@@ -221,9 +221,9 @@ void loop() {
 
   if(seedgerada == 0){
     Serial.print("Random seed: ");
-    Serial.println(analogRead(0));
+    Serial.println(analogRead(A6));
     Serial.println("-------------------------------");
-    randomSeed(analogRead(0));
+    randomSeed(analogRead(A6));
     codigo1 = random(0, 73);
     codigo2 = random(0, 73);
     codigo3 = random(0, 73);
@@ -287,7 +287,7 @@ void loop() {
         digitalWrite(gled, HIGH);
      }
 
-     if(greenButton.pressed() || blueButton.pressed() || redButton.pressed()){
+     if(greenButton.pressed() && selectedcombination == 1 || blueButton.pressed() && selectedcombination == 2 || redButton.pressed() && selectedcombination == 3){
         pressed = 1;
       }
       if (perdeu_o_jogo) {  
@@ -429,7 +429,7 @@ void loop() {
       Serial.print(D1[2]);
       Serial.print(D1[3]);
       Serial.print("-----------");
-      if(D_current[0] == D1[0] && D_current[2] == D1[2]){
+      if(D_current[0] == D1[0] && D_current[1] == D1[1] && D_current[2] == D1[2] && D_current[3] == D1[3]){
          modcurrent = 1;
       }
       for(int ii = 0; ii < 4; ii++){
@@ -448,7 +448,7 @@ void loop() {
       Serial.print(D2[2]);
       Serial.print(D2[3]);
       Serial.print("-----------");
-      if(D_current == D2){
+      if(D_current[0] == D2[0] && D_current[1] == D2[1] && D_current[2] == D2[2] && D_current[3] == D2[3]){
          modcurrent = 1;
       }
 
@@ -468,7 +468,7 @@ void loop() {
       Serial.print(D3[2]);
       Serial.print(D3[3]);
       Serial.print("-----------");
-      if(D_current == D3){
+      if(D_current[0] == D3[0] && D_current[1] == D3[1] && D_current[2] == D3[2] && D_current[3] == D3[3]){
          modcurrent = 1;
       }
 
